@@ -1,0 +1,93 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 1. Catch-all default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Common helpers
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isModuleId(moduleId) {
+      return moduleId == 'INSUMOS' || moduleId == 'COMPRAS';
+    }
+
+    // Validation definitions
+    function isValidArea(data) {
+      return data.keys().hasAll(['name']) && data.keys().size() == 1 &&
+             data.name is string && data.name.size() > 0 && data.name.size() <= 100;
+    }
+
+    function isValidProveedor(data) {
+      return data.keys().hasAll(['name']) && data.keys().size() == 1 &&
+             data.name is string && data.name.size() > 0 && data.name.size() <= 100;
+    }
+
+    function isValidCatalogoItem(data) {
+      return data.keys().hasAll(['descripcion', 'unidad']) &&
+             (data.keys().size() == 2 || (data.keys().size() == 3 && data.keys().hasAll(['tipoCompra']))) &&
+             data.descripcion is string && data.descripcion.size() > 0 && data.descripcion.size() <= 200 &&
+             data.unidad is string && data.unidad.size() > 0 && data.unidad.size() <= 50 &&
+             (!('tipoCompra' in data) || (data.tipoCompra is string && data.tipoCompra.size() <= 50));
+    }
+
+    function isValidMovimiento(data) {
+      return data.keys().hasAll(['id', 'tipo', 'fecha', 'cantidad', 'descripcion', 'unidad', 'area', 'registradoPor', 'eliminado']) &&
+             data.id is number &&
+             data.tipo is string && (data.tipo == 'ENTRADA' || data.tipo == 'SALIDA') &&
+             data.fecha is string && data.fecha.size() == 10 &&
+             data.cantidad is number && data.cantidad >= 0 &&
+             data.descripcion is string && data.descripcion.size() > 0 && data.descripcion.size() <= 200 &&
+             data.unidad is string && data.unidad.size() > 0 && data.unidad.size() <= 50 &&
+             data.area is string && data.area.size() > 0 && data.area.size() <= 100 &&
+             data.registradoPor is string && data.registradoPor.size() > 0 && data.registradoPor.size() <= 100 &&
+             data.eliminado is bool &&
+             (!('eliminadoPor' in data) || (data.eliminadoPor is string && data.eliminadoPor.size() <= 100)) &&
+             (!('prov' in data) || (data.prov is string && data.prov.size() <= 100)) &&
+             (!('fact' in data) || (data.fact is string && data.fact.size() <= 100)) &&
+             (!('fechaFact' in data) || (data.fechaFact is string && data.fechaFact.size() <= 20)) &&
+             (!('costoUnit' in data) || (data.costoUnit is number)) &&
+             (!('costoTotal' in data) || (data.costoTotal is number)) &&
+             (!('aut' in data) || (data.aut is string && data.aut.size() <= 100)) &&
+             (!('tipoCompra' in data) || (data.tipoCompra is string && data.tipoCompra.size() <= 50)) &&
+             (!('recibe' in data) || (data.recibe is string && data.recibe.size() <= 100)) &&
+             (!('resp' in data) || (data.resp is string && data.resp.size() <= 100)) &&
+             (!('timestamp' in data) || (data.timestamp is number));
+    }
+
+    match /modules/{moduleId} {
+      allow read: if isSignedIn() && isModuleId(moduleId);
+
+      match /movimientos/{movimientoId} {
+        allow read: if isSignedIn() && isModuleId(moduleId);
+        allow create, update: if isSignedIn() && isModuleId(moduleId) && isValidId(movimientoId) && isValidMovimiento(request.resource.data);
+        allow delete: if false; // Trazabilidad de auditoría: no se borran físicamente, solo se anulan (eliminado = true)
+      }
+
+      match /catalogo/{catalogItemId} {
+        allow read: if isSignedIn() && isModuleId(moduleId);
+        allow create, update: if isSignedIn() && isModuleId(moduleId) && isValidId(catalogItemId) && isValidCatalogoItem(request.resource.data);
+        allow delete: if isSignedIn() && isModuleId(moduleId);
+      }
+
+      match /areas/{areaId} {
+        allow read: if isSignedIn() && isModuleId(moduleId);
+        allow create, update: if isSignedIn() && isModuleId(moduleId) && isValidId(areaId) && isValidArea(request.resource.data);
+        allow delete: if isSignedIn() && isModuleId(moduleId);
+      }
+
+      match /proveedores/{proveedorId} {
+        allow read: if isSignedIn() && isModuleId(moduleId);
+        allow create, update: if isSignedIn() && isModuleId(moduleId) && isValidId(proveedorId) && isValidProveedor(request.resource.data);
+        allow delete: if isSignedIn() && isModuleId(moduleId);
+      }
+    }
+  }
+}

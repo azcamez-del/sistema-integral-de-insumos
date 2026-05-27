@@ -1,0 +1,80 @@
+{
+  "entities": {
+    "Movimiento": {
+      "title": "Movimiento",
+      "description": "Registro de un movimiento de inventario (entrada o salida)",
+      "type": "object",
+      "properties": {
+        "id": { "type": "number", "description": "ID numerico único del movimiento" },
+        "tipo": { "type": "string", "enum": ["ENTRADA", "SALIDA"], "description": "Tipo de operacion" },
+        "fecha": { "type": "string", "format": "date", "description": "Fecha del movimiento YYYY-MM-DD" },
+        "cantidad": { "type": "number", "description": "Cantidad física" },
+        "descripcion": { "type": "string", "description": "Descripcion del producto" },
+        "unidad": { "type": "string", "description": "Unidad de medida" },
+        "area": { "type": "string", "description": "Area o departamento involucrado" },
+        "notas": { "type": "string", "description": "Notas o folio de auditoria" },
+        "registradoPor": { "type": "string", "description": "Nombre del usuario registrador" },
+        "eliminado": { "type": "boolean", "description": "Indica si el movimiento fue anulado" },
+        "eliminadoPor": { "type": "string", "description": "Nombre de quien anulo el movimiento" },
+        "prov": { "type": "string", "description": "Proveedor" },
+        "fact": { "type": "string", "description": "Factura o Folio" },
+        "fechaFact": { "type": "string", "description": "Fecha de Factura" },
+        "costoUnit": { "type": "number", "description": "Costo unitario" },
+        "costoTotal": { "type": "number", "description": "Costo total calculado" },
+        "aut": { "type": "string", "description": "Persona que autoriza" },
+        "tipoCompra": { "type": "string", "description": "Criterio de resurtido" },
+        "recibe": { "type": "string", "description": "Quien recibe" },
+        "resp": { "type": "string", "description": "Responsable del area" },
+        "timestamp": { "type": "number", "description": "Epoch timestamp para ordenamiento" }
+      },
+      "required": ["id", "tipo", "fecha", "cantidad", "descripcion", "unidad", "area", "registradoPor", "eliminado"]
+    },
+    "CatalogoItem": {
+      "title": "CatalogoItem",
+      "description": "Item del catalogo de materiales predefinido",
+      "type": "object",
+      "properties": {
+        "descripcion": { "type": "string", "description": "Descripcion del producto" },
+        "unidad": { "type": "string", "description": "Unidad de medida" },
+        "tipoCompra": { "type": "string", "description": "Tipo de resurtido o compra" }
+      },
+      "required": ["descripcion", "unidad"]
+    },
+    "Area": {
+      "title": "Area",
+      "description": "Area de destino o departamento maestro",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "Nombre de la area" }
+      },
+      "required": ["name"]
+    },
+    "Proveedor": {
+      "title": "Proveedor",
+      "description": "Proveedor maestro para el modulo compras",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "Nombre del proveedor o empresa" }
+      },
+      "required": ["name"]
+    }
+  },
+  "firestore": {
+    "/modules/{moduleId}/movimientos/{movimientoId}": {
+      "schema": "Movimiento",
+      "description": "Lista de movimientos de entrada y salida para un modulo"
+    },
+    "/modules/{moduleId}/catalogo/{catalogItemId}": {
+      "schema": "CatalogoItem",
+      "description": "Catalogo de materiales y productos maestro por modulo"
+    },
+    "/modules/{moduleId}/areas/{areaId}": {
+      "schema": "Area",
+      "description": "Lista de areas operativas maestras por modulo"
+    },
+    "/modules/{moduleId}/proveedores/{proveedorId}": {
+      "schema": "Proveedor",
+      "description": "Lista de proveedores maestros para un modulo"
+    }
+  }
+}

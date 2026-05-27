@@ -1,0 +1,6 @@
+{
+  "name": "CCU - Sistema Integral de Gestión",
+  "description": "Módulo de gestión de insumos y compras para BUAP CCU, con aislamiento estricto de datos, reportes y control de inventario actual.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
